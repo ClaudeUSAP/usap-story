@@ -97,7 +97,8 @@
       <button id="lang-en" class="active">EN</button>
       <button id="lang-fr">FR</button>
     </div>
-    </div>
+    <a class="back-link" href="https://map.usathleticperformance.com/" target="_blank" rel="noopener" id="back-link">Map view ↗</a>
+  </div>
 </header>
 
 <main>
@@ -334,6 +335,8 @@ function applyLang(lang) {
   document.getElementById('btn-print').textContent = t.print;
   document.getElementById('pill-label').textContent = t.pill_label;
   document.getElementById('pill-clear').textContent = t.clear;
+  const bl = document.getElementById('back-link');
+  if (bl) bl.textContent = (lang === 'en' ? 'Map view ↗' : 'Vue carte ↗');
   document.getElementById('footer-legal').textContent = t.legal;
   document.getElementById('footer-rgpd').innerHTML = t.rgpd;
   // Update select first options
@@ -527,13 +530,18 @@ document.querySelector('thead').addEventListener('click', (e) => {
   render();
 });
 
-applyLang('en');
-// Safety net : force render after DOM fully ready (fixes rare empty-on-load)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', render);
-} else {
-  setTimeout(render, 0);
+// V65 : robust initial rendering (3 safety nets)
+function init() {
+  try {
+    applyLang('en');
+    render();
+  } catch(e) { console.error('init error:', e); }
 }
+init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+}
+window.addEventListener('load', () => setTimeout(render, 100));
 </script>
 </body>
 </html>

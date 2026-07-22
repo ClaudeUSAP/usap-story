@@ -183,6 +183,8 @@
 // V68 : transfers — player NAME → {from_school, from_division}
 // Source: parse map PLAYERS entries with transfer:true
 const TRANSFERS = {
+  "Bogdan Sandrini": {from_school: "University of Central Arkansas", from_division: "NCAA 1"},
+  "Léo Molino": {from_school: "Oakland City University", from_division: "NAIA"},
   "Ylan Guerin-Pozzalo": {from_school: "University of Louisiana Monroe", from_division: "NCAA 1"},
   "Octavio Laurent": {from_school: "University of South Carolina - Beaufort", from_division: "NCAA 2"},
   "Simon Germain": {from_school: "CSU Monterey Bay", from_division: "NCAA 2"},
@@ -195,6 +197,8 @@ const TRANSFERS = {
 };
 
 const RANKINGS_DATA = [
+{name:"Bogdan Sandrini",sex:"Men",class:"Fall 2024",university:"University of Texas Rio Grande Valley",division:"NCAA 1",commit_date:"12/2023",at_commit:"97",aug_prior:"85",aug_start:"87",current:"78",sb_r:"722",sb_s:"72.8"},
+{name:"Léo Molino",sex:"Men",class:"Fall 2024",university:"Texas A&M University-Victoria",division:"NAIA",commit_date:"12/2023",at_commit:"511",aug_prior:"374",aug_start:"674",current:"193",sb_r:"362",sb_s:"75.5"},
   // In College (Fall 2024 & Fall 2025 entries — already at university)
   {name:"Hugo Almeida",sex:"Men",class:"Fall 2024",university:"Chestnut Hill College",division:"NCAA 2",commit_date:"10/2023",at_commit:"301",aug_prior:"333",aug_start:"294",current:"340",sb_r:null,sb_s:"77.8"},
   {name:"Faust Amat",sex:"Men",class:"Fall 2025",university:"Lewis University",division:"NCAA 2",commit_date:"01/2025",at_commit:"214",aug_prior:"456",aug_start:"156",current:"614",sb_r:null,sb_s:"77.6"},
@@ -211,7 +215,7 @@ const RANKINGS_DATA = [
   {name:"Gabriel Delaval",sex:"Men",class:"Fall 2025",university:"Lewis University",division:"NCAA 2",commit_date:"12/2024",at_commit:"349",aug_prior:"356",aug_start:"281",current:"567",sb_r:"581",sb_s:"75.7"},
   {name:"Gabriel Dulon-Villoslada",sex:"Men",class:"Fall 2024",university:"University of Texas Rio Grande Valley",division:"NCAA 1",commit_date:"08/2023",at_commit:"162",aug_prior:"162",aug_start:"34",current:"43",sb_r:"752",sb_s:"72.8"},
   {name:"Ali Elsayed",sex:"Men",class:"Fall 2024",university:"Lawrence Technological University",division:"NAIA",commit_date:"12/2023",at_commit:"415",aug_prior:"471",aug_start:"153",current:"443",sb_r:"782",sb_s:"77.6"},
-  {name:"Simon Germain",sex:"Men",class:"Fall 2024",university:"CSU Monterey Bay",division:"NCAA 2",commit_date:"06/2024",at_commit:"190",aug_prior:"243",aug_start:"191",current:"408",sb_r:"228",sb_s:"73.2"},
+  {name:"Simon Germain",sex:"Men",class:"Fall 2024",university:"Eckerd College",division:"NCAA 2",commit_date:"06/2024",at_commit:"190",aug_prior:"243",aug_start:"191",current:"408",sb_r:"228",sb_s:"73.2"},
   {name:"Samuel Guigui-Baruchel",sex:"Men",class:"Fall 2024",university:"Lander University",division:"NCAA 2",commit_date:"11/2023",at_commit:"71",aug_prior:"112",aug_start:"85",current:"381",sb_r:"476",sb_s:"74.4"},
   {name:"Corentin Guilloux",sex:"Men",class:"Fall 2025",university:"Northern Illinois University",division:"NCAA 1",commit_date:"06/2024",at_commit:"204",aug_prior:"90",aug_start:"76",current:null,sb_r:"1302",sb_s:"74.5"},
   {name:"Octavio Laurent",sex:"Men",class:"Fall 2025",university:"Kansas State University",division:"NCAA 1",commit_date:"04/2025",at_commit:"55",aug_prior:"55",aug_start:"37",current:"32",sb_r:null,sb_s:"69.8"},

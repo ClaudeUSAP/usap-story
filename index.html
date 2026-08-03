@@ -571,6 +571,40 @@ document.querySelector('thead').addEventListener('click', (e) => {
   render();
 });
 
+// ================== LIVE RANKINGS (SCOUT via RPC list_map_rankings) — V68 ==================
+function normNameStory(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[\s\-'’.]/g,'');}
+async function loadLiveRankings(){
+  try{
+    const KEY="sb_publishable_MK8F6_0QgbnuNWPN-0enOw_qyhTQmXs";
+    const r=await fetch("https://bfxhruvkzidvznsyyryp.supabase.co/rest/v1/rpc/list_map_rankings",
+      {method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:"{}"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const data=await r.json();
+    if(!Array.isArray(data)||!data.length) throw new Error("empty");
+    const okInt=v=>v!=null && /^[1-9][0-9]*$/.test(String(v).trim());
+    const okNum=v=>v!=null && String(v).trim()!=='' && !isNaN(parseFloat(v));
+    const live={};
+    for(const x of data){
+      live[normNameStory((x.first_name||'')+' '+(x.last_name||''))]={
+        current: okInt(x.french_adult_ranking) ? String(parseInt(x.french_adult_ranking,10)) : null,
+        sb_r: okInt(x.scoreboard_current_rank) ? String(parseInt(x.scoreboard_current_rank,10)) : null,
+        sb_s: okNum(x.scoreboard_current_score) ? parseFloat(x.scoreboard_current_score).toFixed(1) : null
+      };
+    }
+    let n=0;
+    for(const p of RANKINGS_DATA){
+      const l=live[normNameStory(p.name)];
+      if(!l) continue;
+      if(l.current!=null) p.current=l.current;
+      if(l.sb_r!=null)   p.sb_r=l.sb_r;
+      if(l.sb_s!=null)   p.sb_s=l.sb_s;
+      n++;
+    }
+    console.info(`[live] story rankings patched: ${n} players`);
+    render();
+  }catch(e){ console.warn('[live] story fetch failed, keeping baked values:', e); }
+}
+
 // V65 : robust initial rendering (3 safety nets)
 function init() {
   try {
@@ -583,6 +617,7 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 }
 window.addEventListener('load', () => setTimeout(render, 100));
+loadLiveRankings();
 </script>
 </body>
 </html>

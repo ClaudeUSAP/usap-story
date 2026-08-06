@@ -160,7 +160,7 @@
           <th data-sort="aug_start" id="th-aug-start" class="center">French Ranking when started as a Freshman <span class="sort-indicator">▲</span></th>
           <th data-sort="sb_r" id="th-sb-r" class="center">Current Scoreboard Rank <span class="sort-indicator">▲</span></th>
           <th data-sort="sb_s" id="th-sb-s" class="center">Current Adjusted Score <span class="sort-indicator">▲</span></th>
-          <th data-sort="current" id="th-current" class="center">Current French Ranking (Jul 26) <span class="sort-indicator">▲</span></th>
+          <th data-sort="current" id="th-current" class="center">Current French Ranking <span class="sort-indicator">▲</span></th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -325,7 +325,7 @@ const I18N = {
     export: "Export CSV", print: "Print", back: "← Map view", clear: "Clear",
     pill_label: "FR Rank at Commit",
     players_count: (n) => `${n} players`,
-    th: {name:"Player", class:"Class", university:"University", division:"Division", commit_date:"Committed in", at_commit:"French Ranking when committed", aug_prior:"French Ranking in August 1 year prior to school starting", aug_start:"French Ranking when started as a Freshman", sb_r:"Current Scoreboard Rank", sb_s:"Current Adjusted Score", current:"Current French Ranking (Jul 26)"},
+    th: {name:"Player", class:"Class", university:"University", division:"Division", commit_date:"Committed in", at_commit:"French Ranking when committed", aug_prior:"French Ranking in August 1 year prior to school starting", aug_start:"French Ranking when started as a Freshman", sb_r:"Current Scoreboard Rank", sb_s:"Current Adjusted Score", current:"Current French Ranking"},
     legal: "Data sources: FFGOLF Mérite Amateur (Messieurs + Mesdames) — Scoreboard.clippd.com (CLIPPD Inc.) — USAP internal records. Updated monthly during NCAA season.",
     disclaimer: 'Data presented for informational purposes. Best effort — errors possible. To report an error or request correction/removal of your information: <a href="mailto:nicolas@usathleticperformance.com">nicolas@usathleticperformance.com</a>.',
     rgpd: "GDPR: players and/or their legal representatives have consented to the display of this information. Under GDPR, you can at any time request modification or deletion of your data by email.",
@@ -341,7 +341,7 @@ const I18N = {
     export: "Export CSV", print: "Imprimer", back: "← Vue carte", clear: "Effacer",
     pill_label: "Ranking FR au commit",
     players_count: (n) => `${n} joueurs`,
-    th: {name:"Joueur", class:"Classe", university:"Université", division:"Division", commit_date:"Engagé en", at_commit:"Ranking français lors de l'engagement", aug_prior:"Ranking français en août 1 an avant le départ", aug_start:"Ranking français au début de la Freshman", sb_r:"Ranking Scoreboard actuel", sb_s:"Score ajusté actuel", current:"Ranking français actuel (Juillet 26)"},
+    th: {name:"Joueur", class:"Classe", university:"Université", division:"Division", commit_date:"Engagé en", at_commit:"Ranking français lors de l'engagement", aug_prior:"Ranking français en août 1 an avant le départ", aug_start:"Ranking français au début de la Freshman", sb_r:"Ranking Scoreboard actuel", sb_s:"Score ajusté actuel", current:"Ranking français actuel"},
     legal: "Sources des données : FFGOLF Mérite Amateur (Messieurs + Mesdames) — Scoreboard.clippd.com (CLIPPD Inc.) — Données internes USAP. Mise à jour mensuelle pendant la saison NCAA.",
     disclaimer: 'Données présentées à titre informatif. Best effort — des erreurs sont possibles. Pour signaler une erreur ou demander la correction/retrait de tes informations : <a href="mailto:nicolas@usathleticperformance.com">nicolas@usathleticperformance.com</a>.',
     rgpd: "RGPD : les joueurs et/ou leurs représentants légaux ont consenti à l'affichage de ces informations. Conformément au RGPD, tu peux à tout moment demander la modification ou la suppression de tes données par email.",
@@ -494,7 +494,7 @@ function render() {
 
 function exportCSV() {
   const t = I18N[currentLang].th;
-  const headers = ['Player','Sex','Class','University','Division','Committed in','French Ranking when committed','French Ranking August 1 year prior','French Ranking when started as Freshman','Current Scoreboard Rank','Current Adjusted Score','Current French Ranking (Jul 26)'];
+  const headers = ['Player','Sex','Class','University','Division','Committed in','French Ranking when committed','French Ranking August 1 year prior','French Ranking when started as Freshman','Current Scoreboard Rank','Current Adjusted Score','Current French Ranking'];
   const rows = RANKINGS_DATA.filter(p => {
     if (filters.sex && p.sex !== filters.sex) return false;
     if (filters.class && p.class !== filters.class) return false;

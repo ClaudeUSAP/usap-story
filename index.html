@@ -605,9 +605,15 @@ async function loadLiveRankings(){
     for(const p of RANKINGS_DATA){
       const l=live[normNameStory(p.name)];
       if(!l) continue;
-      if(l.current!=null) p.current=l.current;
-      if(l.sb_r!=null)   p.sb_r=l.sb_r;
-      if(l.sb_s!=null)   p.sb_s=l.sb_s;
+      // V74 — SCOUT fait foi, NULL inclus : « pas classé cette saison » doit s'afficher VIDE.
+      // Le baked ne sert plus que si le live ignore totalement le joueur (`if(!l) continue` ci-dessus),
+      // comme la map qui fait déjà `const src = live || baked`.
+      // Avant : un `!=null` par champ gardait le rang de l'an dernier. 4 joueurs non classés en 26/27
+      // affichaient encore leur rang 25/26 en public (constaté le 22/10/2026), et 3 gardaient un
+      // classement FFGolf périmé. Vérifié contre le mérite d'octobre avant de blanchir.
+      p.current = l.current;
+      p.sb_r    = l.sb_r;
+      p.sb_s    = l.sb_s;
       n++;
     }
     console.info(`[live] story rankings patched: ${n} players`);

@@ -179,6 +179,10 @@
 
 <script>
 // ========== DATA ==========
+// FALLBACK uniquement depuis le 22/11/2026 : le roster vient de SCOUT en direct via la RPC
+//  (voir loadLiveRoster plus bas). Ces lignes restent la base de fusion —
+// elles portent les libellés curés (class/university/division) et les anciens joueurs que
+// SCOUT ne renvoie plus — et servent seules si le fetch échoue.
 // Sourced from SCOUT (Supabase EU project bfxhruvkzidvznsyyryp) — status IN (in_college, committed)
 // Class inferred from graduation_year; Fall 2024 = Class of high school 2024 → college entry Fall 2024
 // V68 : transfers — player NAME → {from_school, from_division}
@@ -270,7 +274,7 @@ const RANKINGS_DATA = [
   {name:"Paul Couston",sex:"Men",class:"Fall 2026",university:"Bethel University (IN)",division:"NAIA",commit_date:"02/2026",at_commit:"214",aug_prior:"240",aug_start:"529",current:"539"},
   {name:"Vadim Dejour",sex:"Men",class:"Fall 2026",university:"College of the Canyons",division:"NJCAA",commit_date:"12/2025",at_commit:"397",aug_prior:"422",aug_start:"793",current:"975"},
   {name:"Melvil Jacquelin",sex:"Men",class:"Fall 2026",university:"CSU Monterey Bay",division:"NCAA 2",commit_date:"10/2025",at_commit:"109",aug_prior:"99",aug_start:"106",current:"101"},
-  {name:"Corentin Jorat",sex:"Men",class:"Fall 2026",university:"Defiance College",division:"NCAA 3",commit_date:"04/2026",at_commit:null,aug_prior:null,aug_start:"711",current:"984"},
+  {name:"Corentin Jorat",sex:"Men",class:"Fall 2026",university:"Defiance College",division:"NAIA",commit_date:"04/2026",at_commit:null,aug_prior:null,aug_start:"711",current:"984"},
   {name:"Théophile Lebrun",sex:"Men",class:"Fall 2026",university:"East Tennessee State University",division:"NCAA 1",commit_date:"06/2026",at_commit:"21",aug_prior:"105",aug_start:"23",current:"48"},
   {name:"Sacha Molino",sex:"Men",class:"Spring 2027",university:"Mid America Nazarene University",division:"NAIA",commit_date:"09/2025",at_commit:"175",aug_prior:"180",aug_start:null,current:"355"},
   {name:"Maxime Olivo",sex:"Men",class:"Fall 2026",university:"Wayland Baptist University",division:"NAIA",commit_date:"01/2026",at_commit:"97",aug_prior:"97",aug_start:"694",current:"938"},
@@ -580,6 +584,113 @@ document.querySelector('thead').addEventListener('click', (e) => {
   render();
 });
 
+// ================== LIVE ROSTER (SCOUT via RPC list_story_roster) — 22/11/2026 ==================
+// Le roster était sourcé à la main : chaque nouveau joueur demandait un push. Il arrive
+// maintenant de SCOUT (`committed` + `in_college`, filtre en dur côté serveur).
+//
+// RÈGLE DE FUSION, établie en comparant les 157 lignes SCOUT aux 115 bakées :
+//
+//  * SCOUT fait foi sur les données d'engagement — `commit_date`, `at_commit`,
+//    `aug_prior`, `aug_start`. Zéro divergence mesurée sur ces 4 champs : c'est bien la
+//    même source, le baké n'en était qu'une copie vieillissante.
+//
+//  * Le BAKÉ fait foi sur `class`, `university` et `division` quand il a une valeur, car
+//    ce sont des libellés curés à la main :
+//      - `class` = promo d'ARRIVÉE EN FAC. `athletes.signing_season` porte la dernière
+//        signature, donc l'année du TRANSFERT pour un transféré : Léo Molino est arrivé en
+//        Fall 2024 et signing_season dit Fall 2026. 14 joueurs concernés.
+//      - `university` : SCOUT stocke le nom officiel long, la story affiche un nom court
+//        lisible (« Cal Poly », « UC Berkeley », « UT Southern »). 24 joueurs concernés.
+//      - `division` : les 2 conflits trouvés le 22/11 (Corentin Jorat, Salomé Paumelle) ont
+//        été tranchés à la source — NAIA pour les deux : le baké de la story était faux pour
+//        Jorat (Defiance College est passé NAIA), et c'était `universities.division` qui était
+//        faux pour Paumelle (Texas A&M-Texarkana, corrigé en NAIA dans SCOUT). Un écart qui
+//        réapparaîtrait est signalé en console, pas écrasé en silence.
+//
+//  * Un joueur ABSENT du live n'est JAMAIS retiré. Les `archived` restent affichés comme
+//    anciens joueurs (décision du 25/10/2026) : Burnet, Maréchal Dubourg, Kumar, Paviet,
+//    Jacquelin, Molino (Sacha) ne sont plus committed/in_college dans SCOUT et doivent
+//    pourtant rester. Le baké est donc la base, le live l'enrichit.
+//
+// Si le fetch échoue, la page garde intégralement ses valeurs bakées.
+async function loadLiveRoster(){
+  try{
+    const KEY="sb_publishable__XZlKzZKzk1uN6UQEqPVgQ_co22MxtA";
+    const r=await fetch("https://bfxhruvkzidvznsyyryp.supabase.co/rest/v1/rpc/list_story_roster",
+      {method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json"},body:"{}"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const rows=await r.json();
+    if(!Array.isArray(rows)||!rows.length) throw new Error("empty");
+
+    const clean=v=>{ const s=(v==null?'':String(v)).trim(); return s===''?null:s; };
+    const index=new Map(RANKINGS_DATA.map(p=>[normNameStory(p.name),p]));
+    let patched=0, added=0, conflits=[], transferts=[];
+
+    for(const x of rows){
+      const name=((x.first_name||'')+' '+(x.last_name||'')).trim();
+      const uni=clean(x.university);
+      if(!name||!uni) continue;
+
+      const engagement={ commit_date: clean(x.commit_date),
+                         at_commit:   clean(x.fr_rank_at_commit),
+                         aug_prior:   clean(x.fr_rank_1yr_before),
+                         aug_start:   clean(x.fr_rank_at_start) };
+      const p=index.get(normNameStory(name));
+
+      if(p){
+        Object.assign(p, engagement);
+        const dLive=clean(x.division);
+        if(dLive && p.division && dLive!==p.division) conflits.push(`${name} : story ${p.division} / SCOUT ${dLive}`);
+        if(!p.class)      p.class      = clean(x.signing_season);
+        if(!p.university) p.university = uni;
+        if(!p.division)   p.division   = dLive;
+        patched++;
+      }else{
+        // Nouveau joueur : tout vient du live. `class` prend signing_season — juste sauf
+        // pour un transféré, d'où le signalement ci-dessous.
+        RANKINGS_DATA.push({ name, sex: clean(x.sex), class: clean(x.signing_season),
+          university: uni, division: clean(x.division), ...engagement,
+          current: clean(x.french_adult_ranking),
+          sb_r:    clean(x.scoreboard_current_rank),
+          sb_s:    clean(x.scoreboard_current_score) });
+        added++;
+        if(clean(x.transfer_from_school)) transferts.push(name);
+      }
+    }
+
+    syncFilterOptions();
+    console.info(`[live] story roster: ${rows.length} SCOUT -> ${patched} mis à jour, ${added} ajoutés, ${RANKINGS_DATA.length} au total`);
+    if(conflits.length)   console.warn('[live] division divergente story/SCOUT, à arbitrer :', conflits);
+    if(transferts.length) console.warn('[live] transférés ajoutés : `class` = saison de transfert, promo d\'arrivée à vérifier :', transferts);
+    render();
+  }catch(e){ console.warn('[live] story roster fetch failed, keeping baked list:', e); }
+}
+
+// Les listes « All classes » et « All divisions » étaient figées dans le HTML : elles
+// ignoraient déjà NCAA 3, pourtant présent dans les données, et rateraient toute promo
+// nouvelle. On les reconstruit depuis le roster effectivement chargé.
+function syncFilterOptions(){
+  const ORDRE_DIV=['NCAA 1','NCAA 2','NCAA 3','NAIA','NJCAA'];
+  const rangClasse=c=>{ const m=/^(Spring|Fall) (\d{4})$/.exec(c||''); 
+                        return m ? parseInt(m[2],10)*2 + (m[1]==='Fall'?1:0) : 9e9; };
+  const remplir=(id, valeurs, libelle)=>{
+    const sel=document.getElementById(id); if(!sel) return;
+    const garde=sel.value;
+    const tout=sel.querySelector('option[value=""]');
+    sel.innerHTML='';
+    sel.appendChild(tout || Object.assign(document.createElement('option'),{value:'',textContent:'All'}));
+    for(const v of valeurs){
+      sel.appendChild(Object.assign(document.createElement('option'),{value:v, textContent:libelle(v)}));
+    }
+    if(garde && valeurs.includes(garde)) sel.value=garde;
+  };
+  const classes=[...new Set(RANKINGS_DATA.map(p=>p.class).filter(Boolean))].sort((a,b)=>rangClasse(a)-rangClasse(b));
+  const divs=[...new Set(RANKINGS_DATA.map(p=>p.division).filter(Boolean))]
+             .sort((a,b)=>(ORDRE_DIV.indexOf(a)+1||99)-(ORDRE_DIV.indexOf(b)+1||99));
+  remplir('filter-class', classes, v=>v);
+  remplir('filter-div',   divs,    v=>v.startsWith('NCAA ')?'NCAA D'+v.slice(5):v);
+}
+
 // ================== LIVE RANKINGS (SCOUT via RPC list_map_rankings) — V68 ==================
 function normNameStory(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[\s\-'’.]/g,'');}
 async function loadLiveRankings(){
@@ -632,7 +743,10 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 }
 window.addEventListener('load', () => setTimeout(render, 100));
-loadLiveRankings();
+// Roster d'abord : il peut AJOUTER des joueurs. Les classements ensuite, pour que les
+// nouveaux soient patchés comme les autres. Si le roster échoue, les classements
+// tournent quand même sur la liste bakée.
+loadLiveRoster().finally(loadLiveRankings);
 </script>
 </body>
 </html>
